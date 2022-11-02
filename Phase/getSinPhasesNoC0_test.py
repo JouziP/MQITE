@@ -89,7 +89,7 @@ def getSinPhasesNoC0(df_ampl,
         
         
         ## m1
-        ###################### Using the satte vector to read ampl of m1 !!!
+        ###################### Using the state vector to read ampl of m1 !!!
         ###################### the alternative is to make shots and distill
         ###################### for the ones where ancillary is in state 0
         ###################### It would have been very computationally heavy

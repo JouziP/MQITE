@@ -89,6 +89,9 @@ def computeAmplitude(circ_uhu, shots, eta, significant_figures, machine_precisio
     
     significant_figures : int
         significant figure == \epsilon in the precision 10^-\epsilon (approx)
+        This is used as benchmark 
+        the actual precision  of the amplitudes are specified by the number of 
+        shots
     
     machine_precision : int
         significant figure in the benchmark values
@@ -129,12 +132,17 @@ def computeAmplitude(circ_uhu, shots, eta, significant_figures, machine_precisio
     m_support = df_count.shape[0]    
     print('m_support = ', m_support)
         
-    ### amplitudes |cj|
+    ### amplitudes |cj| Note the precisoon is defined by the shots 
+    ### and not by the significant_figures input !
     df_ampl = (df_count/df_count.sum()).apply(lambda x: np.sqrt(x))  
+    ### Sorted by largest value first !
     df_ampl = df_ampl.sort_values(0, ascending=False)
-    df_ampl_org = pd.DataFrame.copy(df_ampl) # the amplitudes before rounding
+    
+    
     
     #################### some other metrics 
+    ### the amplitudes for bm/metric, before rounding
+    df_ampl_org = pd.DataFrame.copy(df_ampl) 
     m_support_rounded = pd.DataFrame.sum(df_ampl_org.round(significant_figures)!=0)[0]
     print('m_support_rounded = ', m_support_rounded)
     
@@ -151,6 +159,8 @@ def computeAmplitude(circ_uhu, shots, eta, significant_figures, machine_precisio
         drop_in_peak = df_ampl_org.values[0,0]
     
     ####################  pick the eta dominant amplitudes |cj|
+    ### Sinbce sorted by the largest values first, the first eta are the largest 
+    ### amplitudes
     df_ampl = df_ampl[:eta]
     
     #####  making sure they are all non-zero
@@ -166,8 +176,8 @@ def computeAmplitude(circ_uhu, shots, eta, significant_figures, machine_precisio
     ####################
     
     ### sort    
-    df_comp_bm = df_comp_bm.sort_index()
-    df_ampl = df_ampl.sort_index()
+    df_comp_bm = df_comp_bm.sort_values(0, ascending=False)
+    df_ampl = df_ampl.sort_values(0, ascending=False)
     
     ############
     return df_comp_bm, df_ampl, m_support, std_prob, drop_in_peak, df_ampl_org

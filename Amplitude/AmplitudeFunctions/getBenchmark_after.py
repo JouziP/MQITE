@@ -20,7 +20,12 @@ from BasicFunctions.functions import getState
 def getBenchmark_after( df_ampl, j_list, circ_uhu, significant_figures, machine_precision):
         #################### Benchmark 
         circ_state = getState(circ_uhu, machine_precision)   
-        df_ampl_bm =  pd.DataFrame.copy(df_ampl)    
+        
+        ### confusing ! This is an empty df essetially
+        ### to be replaced
+        df_ampl_bm =  pd.DataFrame.copy(df_ampl)   
+        
+        
         df_ampl_bm.loc[df_ampl_bm.index]=circ_state[j_list, :].round(significant_figures).T.tolist()[0]        
         ####################
         

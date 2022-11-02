@@ -14,22 +14,53 @@ import numpy as np
 import pandas as pd
 
 
-from Amplitude.getIndexsFromExecute import getIndexsFromExecute
-from Amplitude.getAmplitudes import getAmplitudes
-from Amplitude.getBenchmark_before import getBenchmark_before
-from Amplitude.getBenchmark_after import getBenchmark_after
+from Amplitude.AmplitudeFunctions.getIndexsFromExecute import getIndexsFromExecute
+from Amplitude.AmplitudeFunctions.getAmplitudes import getAmplitudes
+from Amplitude.AmplitudeFunctions.getBenchmark_before import getBenchmark_before
+from Amplitude.AmplitudeFunctions.getBenchmark_after import getBenchmark_after
 
 
 class Amplitude:
-    def __init__(self, circ, circ_uhu, shots, eta, significant_figures, machine_precision=10):
-        self.circ = circ
+    def __init__(self, circ_uhu, shots, eta, significant_figures, machine_precision=10):
+        # self.circ = circ
         self.circ_uhu = circ_uhu
         self.shots = shots
         self.eta = eta
         self.significant_figures = significant_figures
         self.machine_precision = machine_precision
         
+    def __call__(self, ):
+        df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded = self.computeAmplutudes()
+        
+        self.df_ampl_bm = df_ampl_bm
+        self.df_ampl = df_ampl
+        self.std_prob = std_prob
+        self.drop_in_peak = drop_in_peak
+        self.m_support = m_support
+        self.m_support_rounded = m_support_rounded
+        
+        
+        
     def computeAmplutudes(self):
+        '''
+        Main method of this class
+
+        Returns
+        -------
+        df_ampl_bm : TYPE
+            DESCRIPTION.
+        df_ampl : TYPE
+            DESCRIPTION.
+        std_prob : TYPE
+            DESCRIPTION.
+        drop_in_peak : TYPE
+            DESCRIPTION.
+        m_support : TYPE
+            DESCRIPTION.
+        m_support_rounded : TYPE
+            DESCRIPTION.
+
+        '''
         
         #################### |cj|^2 and js upto significant digits - tested +
         [counts, j_indxs], df_count = self.getIndexsFromExecute(self.circ_uhu, self.shots)   
@@ -38,11 +69,13 @@ class Amplitude:
         m_support_rounded, drop_in_peak, m_support, std_prob = self.getBenchmark_before( df_count, self.significant_figures)
         
         ### keep eta of them -> {|c_j|} = df_ampl - tested +
+        ### the j's and c_j's from shots and observed bit string --> NO state vector
         j_list, df_ampl = self.getAmplitudes(df_count, self.eta)
         
         ### some other bm after trimming - tested 
+        ### it returns the state vector values of observed j's
         df_ampl_bm = self.getBenchmark_after( df_ampl, j_list, self.circ_uhu, self.significant_figures, self.machine_precision)
-        print(df_ampl_bm)
+        
         
         return df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded
         
@@ -53,8 +86,8 @@ class Amplitude:
         return  getIndexsFromExecute(circ, shots, backend)
         
     
-    def getAmplitudes(self, df_count, eta):                
-        pass
+    def getAmplitudes(self, df_count, eta): 
+                 
         return getAmplitudes( df_count, eta)
         
    
@@ -150,7 +183,7 @@ if __name__=='__main__':
     
     ################################# TEST
     ###### Constructor
-    myAmplObj = Amplitude(circ, circ_uhu, shots, eta, significant_figures, machine_precision=10)
+    myAmplObj = Amplitude( circ_uhu, shots, eta, significant_figures, machine_precision=10)
     
     ###### main public method
     df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded =  myAmplObj.computeAmplutudes()

@@ -37,7 +37,7 @@ class FindCircParams:
         self.significant_figures = significant_figures
         self.machine_precision = machine_precision
         
-        localAmplitudeObj  =  Amplitude(circ, circ_UQU, shots, eta, significant_figures, machine_precision)
+        self.localAmplitudeObj  =  Amplitude(circ, circ_UQU, shots, eta, significant_figures, machine_precision)
         
         
     def computeParameters(self ):
@@ -45,20 +45,22 @@ class FindCircParams:
         
         df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded = self.localAmplitudeObj.computeAmplutudes()
         
-        ### if nothing observed 
+        ### if nothing observed ; df_ampl empty
         if df_ampl.empty==True:
             return [[], [], m_support]
         
-        # ### if observed 
-        # else:
-        #     ### if nothing observed 
-        #     df_cj = computePhaseStateVec(  df_ampl,  
-        #                                   df_comp_bm, 
-        #                                   circ,
-        #                                   Q,
-        #                                   circ_UQU, 
-        #                                   significant_figures, 
-        #                                   nspins)            
+        ### if observed 
+        else:
+            pass
+            ### if something is observed, we will compute the real and 
+            ### imaginary parts of c_j's for observed components 
+            # df_cj = computePhaseStateVec(df_ampl,  
+            #                               df_comp_bm, 
+            #                               circ,
+            #                               Q,
+            #                               circ_UQU, 
+            #                               significant_figures, 
+            #                               nspins)            
     
         #     ### if at least one y_j is non-zero
         #     try:                        
