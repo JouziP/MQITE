@@ -13,7 +13,7 @@ from time import time
 
 class TestCirc:
     
-    def __init__(self, func, FLAG=True):
+    def __init__(self, func, FLAG=False):
         self.func = func
         self.func.name = func.__name__
         self.FLAG=FLAG

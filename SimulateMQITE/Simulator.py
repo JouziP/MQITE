@@ -6,7 +6,8 @@ Created on Wed Nov  2 13:32:55 2022
 @author: pejmanjouzdani
 """
 import os
-import logging
+
+from  SimulateMQITE.log_config import logger
 
 
 
@@ -23,6 +24,7 @@ from BasicFunctions.functions import  getUQUCirc, getQCirc
 
 
 
+
 class Hamiltonin():
     def __init__(self, Qs, ws, nspins):
         self.Qs = Qs
@@ -33,10 +35,13 @@ class Hamiltonin():
 class Simulator():
     def __init__(self,T, n_H, delta, Qs, ws, nspins , shots_amplitude,
                  shots_phase ,  eta, significant_figures, 
-                 machine_precision):
+                 machine_precision, AmplTestLevel=0):
         
         
-        logging.info('%s.%s '%(self.__class__.__name__, self.__init__.__name__) )
+        
+        
+        
+        
         
         # # proof check if the Values and Types are correct
         # self.checkValuesAndType(T, n_H, delta, Qs, ws, nspins , shots_amplitude,
@@ -54,7 +59,7 @@ class Simulator():
         self.eta = eta
         self.significant_figures= significant_figures
         self.machine_precision = machine_precision
-        
+        self.AmplTestLevel =AmplTestLevel
         ### Variable Attributes
         self.circ = QuantumCircuit(nspins)
         
@@ -62,7 +67,7 @@ class Simulator():
         
         
     def __call__(self,):
-        logging.info('%s.%s '%(self.__class__.__name__, self.__call__.__name__) )
+        
         
         nspins              = self.nspins
         T                   = self.T
@@ -81,77 +86,72 @@ class Simulator():
         circ                = self.circ
         
         for t in range(int(T/delta)):
-            logging.info('\n=== === %s.%s --> time step: %d \n'%(self.__class__.__name__, self.__call__.__name__, t) )
+            logger.debug('\n=== === --> time step: %d \n'%( t) )
             
             for k in range(n_H):
-                logging.info('\n=== === %s.%s --> time step: %d --> k step %d \n'%(self.__class__.__name__, self.__call__.__name__, t, k) )
+                logger.debug('=== === --> t: %d , k: %d \n'%( t, k) )
 
+        
                 Q = Qs[k]
                 w = ws[k]                
                 delta_k = delta * w
                 
-                circ_Q = getQCirc(circ, Q)                
-                circ_UQU = getUQUCirc(circ, circ_Q)
+                circ_Q = getQCirc(QuantumCircuit.copy(circ), Q)                
+                circ_UQU = getUQUCirc(QuantumCircuit.copy(circ), circ_Q)
                 
                 # ### constructor
-                ampObj = Amplitude(circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision)
+                self.ampObj = Amplitude(circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision)
                 
                 ### execution, test, save results, etc.
-                ampObj()
+                self.ampObj(TestLevel=self.AmplTestLevel)
                 
                 # ### get phases
-                phaseObj = Phase(ampObj, 
+                self.phaseObj = Phase(self.ampObj, 
                                  nspins, 
-                                 circ,
+                                 QuantumCircuit.copy(circ),
                                  Q, 
                                  significant_figures, 
                                  shots_phase, 
                                  machine_precision)
                 
                 ### compute c_j^(r) and c_j^(im) for all j's in AmpObj
-                phaseObj()
+                self.phaseObj()
                 
-        #         ### get the parameters and associated j; y_j == [y_j^(r) , y_j^(i) ]
-        #         [js, ys_j]=phaseObj.getY(delta_k)
+                ### get the parameters and associated j; y_j == [y_j^(r) , y_j^(i) ]
+                [js, ys_j]=self.phaseObj.getY(delta_k)
                 
-        #         ### updateCircuit
-        #         updateCircuitObj = UpdateCircuit(ys_j, js, circ)
+                ### updateCircuit
+                updateCircuitObj = UpdateCircuit()
                 
-        #         ### compute stuff
-        #         updateCircuitObj()
+                ### compute stuff
+                circ_new, multigate_gate_stat =  updateCircuitObj(js, ys_j, QuantumCircuit.copy(circ),)
                 
-        #         ####
-        #         circ = QuantumCircuit.copy(updateCircuitObj.circ_new) 
+                ####
+                circ = QuantumCircuit.copy(updateCircuitObj.circ_new) 
     
     
     @staticmethod
     def checkValuesAndType(T, n_H, delta, Qs, ws, nspins , shots_amplitude,
                  shots_phase ,  eta, significant_figures, 
-                 machine_precision):
+                 machine_precision):        
         NotImplemented
                 
       
 if __name__=='__main__':
     
+      
     
-    
-    log_filename = 'Simulator.log'
-    logging.basicConfig(filename=log_filename, 
-                        format='%(asctime)s %(filename)s %(message)s', 
-                        level=logging.INFO, 
-                        force=True)
-    
-    
-    
+
     import numpy as np
     seed = 12321    
     ########  seed random
     np.random.seed(seed)
     
     
-    T = 1.
+    
     n_H = 2
     delta= 0.1
+    T = 2 * delta
     Qs = [[1,2,1,0], [3,2,3,2]]
     ws = [0.2, 0.4]
     nspins = 4
@@ -160,12 +160,12 @@ if __name__=='__main__':
     eta =100
     significant_figures = 3
     machine_precision  = 10
-                
+    AmplTestLevel=1
                 
                 
     simulator = Simulator(T, n_H, delta, Qs, ws, nspins , shots_amplitude,
                   shots_phase ,  eta, significant_figures, 
-                  machine_precision)
+                  machine_precision, AmplTestLevel)
     simulator()
             
     

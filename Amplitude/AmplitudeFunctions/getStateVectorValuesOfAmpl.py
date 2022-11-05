@@ -17,17 +17,15 @@ from BasicFunctions.functions import getState
 
 
 
-def getBenchmark_after( df_ampl, j_list, circ_uhu, significant_figures, machine_precision):
+def getStateVectorValuesOfAmpl( j_list, circ_uhu, significant_figures, machine_precision):
         #################### Benchmark 
         circ_state = getState(circ_uhu, machine_precision)   
         
-        ### confusing ! This is an empty df essetially
-        ### to be replaced
-        df_ampl_bm =  pd.DataFrame.copy(df_ampl)   
+        ###        
+        df_ampl_bm = pd.DataFrame(circ_state[j_list, :].round(significant_figures).T.tolist()[0])
         
-        
-        df_ampl_bm.loc[df_ampl_bm.index]=circ_state[j_list, :].round(significant_figures).T.tolist()[0]        
-        ####################
+        df_ampl_bm.columns=[0]
+        df_ampl_bm.index = j_list
         
         df_ampl_bm[0] = df_ampl_bm[0].apply(lambda x: np.sqrt(x*x.conjugate()).real)
 
@@ -113,19 +111,21 @@ if __name__=='__main__':
     circ_uhu = getCircUQU(circ, Q)
     
     
-    from Amplitude.getIndexsFromExecute import getIndexsFromExecute    
-    from Amplitude.getBenchmark_before import getBenchmark_before
-    from Amplitude.getAmplitudes import getAmplitudes    
+    from Amplitude.AmplitudeFunctions.getIndexsFromExecute import getIndexsFromExecute    
+    from Amplitude.AmplitudeFunctions.getAmplitudes import getAmplitudes    
     
-    [counts, j_indxs], df_count = getIndexsFromExecute(circ_uhu, shots, backend = 'qasm_simulator')       
+    df_count = getIndexsFromExecute(circ_uhu, shots, backend = 'qasm_simulator')       
     
-    m_support_rounded, drop_in_peak, m_support , std_prob = getBenchmark_before(df_count, significant_figures)     
-    
-    j_list, df_ampl = getAmplitudes(df_count, eta)
+    df_ampl = getAmplitudes(df_count, eta)
     
     
-    df_ampl_bm = getBenchmark_after( df_ampl, j_list, circ_uhu, significant_figures, machine_precision)
-    
+    df_ampl_bm = getStateVectorValuesOfAmpl( df_ampl.index.tolist(),
+                                                 circ_uhu,
+                                                 significant_figures, 
+                                                 machine_precision)
+
+
+
     
     ### sort    
     df_ampl_bm = df_ampl_bm.sort_index()
@@ -141,8 +141,7 @@ if __name__=='__main__':
     print('=========================')
     print('This test creates a random circuit with %s number of layers of gates, and %s number of qubits '%(num_layers, nspins))
     print('A Pauli string prator Q is randomly generated, X==0, Y==1, etc.  -->  Q = %s'%(Q))    
-    print('The actual number of observed |c_j|^2 with non-zero values are %s '%(m_support))    
-    print('The same number of observed |c_j|^2 with non-zero values AFTER rounding to %s significant figure is %s which is expected to be the same as above'%(significant_figures, m_support_rounded))    
+    
     print('The resean is that the number of shots is supposed to genrate numbers that are significant upto the %s, so when rounding to it the non-zero values are the same before rounding '%significant_figures)    
     print()
     print('In practice we set a cut of eta: a maximum number of %s (eta) components with largest |c_j|^2 are retained'%(eta))    

@@ -14,6 +14,10 @@ Created on Wed Jun  1 10:23:43 2022
 @author: pej
 """
 
+from SimulateMQITE.log_config import logger
+
+
+
 
 from scipy.linalg import schur
 from time import time    , perf_counter, ctime
@@ -63,7 +67,7 @@ I2 = np.matrix([[1.+0.j, 0.+0.j],
 
 
 ###############################################################################
-@TestCirc
+
 def getQCirc(circ, Q):    
     #############
     # Qiskit error
@@ -99,7 +103,7 @@ def getQCirc(circ, Q):
             
     return circ_Q
 
-@TestCirc
+
 def getUQUCirc(circ, circ_Q):
     circ_UQU = QuantumCircuit.copy(circ_Q)  ## QU|0>
     circ_UQU = circ_UQU.compose(QuantumCircuit.copy(circ.inverse()) )## U^QU|0>

@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov  2 17:20:18 2022
+Created on Sat Nov  5 15:03:00 2022
 
 @author: pejmanjouzdani
 """
+"""
+Simple test using logging
+"""
+class A:
+    def __init__(self, x):
+        return self.__call__(x)
+    
+    def __call__(self, x):
+        return x+1
+    
+if __name__=='__main__':
+    x = 10
+    print(A(x))
 
-import os
-import logging
-filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ram.log')
-logging.basicConfig(filename=filename, level=logging.DEBUG, force=True)
-logging.debug('This message should go to the log file')
+    
