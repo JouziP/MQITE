@@ -6,3 +6,5 @@ Created on Wed Nov  2 14:12:30 2022
 @author: pejmanjouzdani
 """
 
+class UpdateCircuit:
+    pass

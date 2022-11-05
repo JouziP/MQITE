@@ -38,12 +38,19 @@ def getIndexsFromExecute(circ, shots, backend = 'qasm_simulator'):
     
     
     '''
+    ### check if shots are type and value correct 
+    if not isinstance(shots, int):
+        raise TypeError('shots must be an integer')
+        
+    if shots<1 or shots>10**8:
+        raise ValueError('Number of shots is either less than 1 or larger than 10^8')
    
+    ### check if backend is correct    
     simulator = Aer.get_backend(backend)
    
+    ### check the circ Value and Type
     
-    ####################
-    
+    ### Building measurment circuit
     num_qubits = circ.num_qubits
     circ_meas = QuantumCircuit(num_qubits, num_qubits)
     circ_meas = circ_meas.compose(circ)
@@ -62,9 +69,10 @@ def getIndexsFromExecute(circ, shots, backend = 'qasm_simulator'):
     
     j_indxs = np.sort(list([key for key in counts.int_outcomes().keys()]))
     
+    ### Using Pandas dataframe to organize
     df_count = pd.DataFrame([counts.int_outcomes()]).T   
     
-    return [counts, j_indxs], df_count
+    return df_count
 
 
 

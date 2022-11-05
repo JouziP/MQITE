@@ -31,27 +31,26 @@ from Phase.PhaseTests.testImagPart_m1 import test1, test2
 ################### When c0 == 0
 
 def getRealPart(df_ampl, ### amplitude |c_j| computed from shots                 
-                circ, 
+                circ_U, 
                 circ_UQU,
                 Q,
-                significant_digits, 
+                significant_figure, 
                 nspins, 
                 shots,
                 j_ref, 
-                test_1=True,
-                test_2=True,
+                machine_precision=10,                
                 ): 
     '''
     for the scenario where j_ref=0 is NOT in df_ampl.index
     or c_0 == 0
     '''
     
-    ################## FOR COMPARISON
-    #### df_comp_exact, ### this is exact c_j for benchmark             
-    circ_state = getState(circ_UQU, machine_precision)
-    vec=circ_state[df_ampl.index, : ]
-    df_comp_exact = pd.DataFrame(vec, df_ampl.index)    
-    ################## 
+    # ################## FOR COMPARISON
+    # #### df_comp_exact, ### this is exact c_j for benchmark             
+    # circ_state = getState(circ_UQU, machine_precision)
+    # vec=circ_state[df_ampl.index, : ]
+    # df_comp_exact = pd.DataFrame(vec, df_ampl.index)    
+    # ################## 
     
     circ_adj = QuantumCircuit(nspins+1)
     _gamma =   -np.pi/4
@@ -92,7 +91,7 @@ def getRealPart(df_ampl, ### amplitude |c_j| computed from shots
     
     #################### for each j2  The T_{j_ref -> j2} is different 
     indexs = df_ampl.index  ### the observed bit strings from shots; j's
-    parts_real= [[ 0, 0]]  # ref
+    parts_real= [[ 0]]  # ref
     part_indexs=[j_ref]
 
     
@@ -107,22 +106,15 @@ def getRealPart(df_ampl, ### amplitude |c_j| computed from shots
         
         #####  from shots
         m1, __ = computeAmplFromShots(circ_uhu_adj, shots, j_ref)
-        m1 = np.round(m1, significant_figures)
+        m1 = np.round(m1, significant_figure)
         
         
-        ##############################################################   test1
-        if test_1==True:
-            test1(circ_uhu_adj, significant_digits, j_ref, j2, m1)
-        ##############################################################
+       
                        
         #### amplitude  from shots
         c2_2 = df_ampl[0][j2]**2 ### |c_j|^2
-        c2_2    = np.round(c2_2, significant_figures)
+        c2_2    = np.round(c2_2, significant_figure)
         
-        ##############################################################   test2
-        if test_2==True:
-            test2(df_comp_exact, j2,significant_digits, c2_2)
-        ##############################################################
         
         
         
@@ -130,17 +122,21 @@ def getRealPart(df_ampl, ### amplitude |c_j| computed from shots
         real_part = (m1 - (1/4) * c2_2**2 * (np.cos(_gamma/2)**2) - (1/4)*(np.sin(_gamma/2))**2 )/ ((-1/2) * np.cos(_gamma/2) * np.sin(_gamma/2))
         
         #### round to allowed prcision
-        real_part = np.round(real_part, significant_digits)
+        real_part = np.round(real_part, significant_figure)
            
         ### collect results
-        parts_real.append([ real_part, df_comp_exact[0][j2].real])
+        parts_real.append([ real_part, 
+                           # df_comp_exact[0][j2].real
+                           ])
         part_indexs.append(j2)
      
         
-    parts_real = pd.DataFrame(parts_real, index= part_indexs).round(significant_digits)
+    parts_real = pd.DataFrame(parts_real, index= part_indexs).round(significant_figure)
     
         
-    parts_real.columns=[ 'c_real_sim', 'c_real_exct']    
+    parts_real.columns=[ 'c_real_sim', 
+                        # 'c_real_exct'
+                        ]    
     
     return parts_real
 
@@ -223,11 +219,11 @@ if __name__=='__main__':
     
     ################################################################
     ################################################################
-    nspins = 8   # >=2
+    nspins = 6   # >=2
     num_layers =2
     num_itr =1
     machine_precision = 10        
-    shots = 10000
+    shots = 1000
     eta = 100
     significant_figures = 3#np.log10(np.sqrt(shots)).astype(int)
     
@@ -240,21 +236,19 @@ if __name__=='__main__':
     ##    ### amplitude |c_j| computed from shots 
     localAmplitudeObj  =  Amplitude(circ_U, circ_UQU, shots, eta, significant_figures, machine_precision)
     
-    df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded = localAmplitudeObj.computeAmplutudes()
+    localAmplitudeObj()
     
+    df_ampl  = localAmplitudeObj.df_ampl
     
     ######## EXCLUDE index 0
     try:
         df_ampl = df_ampl.drop(index=0)
-        df_ampl_bm = df_ampl_bm.drop(index=0)
+        
     except:
         pass
     
     print('df_ampl')
-    print(df_ampl)
-    print()
-    print('df_ampl_bm')                
-    print(df_ampl_bm)        
+    print(df_ampl)    
     print()
     
     
@@ -273,38 +267,36 @@ if __name__=='__main__':
                     nspins, 
                     shots,
                     j_ref, 
-                    test_1=True,
-                    test_2=True,
                     )
         
     print(parts_real)
 
-    print('\n\n##### sign errors')
-    num_error = 0
-    for jj in  parts_real.index:
-        if parts_real['c_real_exct'][jj]>=0 and  parts_real['c_real_sim'][jj]>=0:                     
-            num_error+=  0
-        else:
-            if parts_real['c_real_exct'][jj]<0 and  parts_real['c_real_sim'][jj]<0:                     
-                num_error+=  0
-            else:
-                print(parts_real['c_real_exct'][jj],   '      ', parts_real['c_real_sim'][jj])
-                num_error+= 1
+    # print('\n\n##### sign errors')
+    # num_error = 0
+    # for jj in  parts_real.index:
+    #     if parts_real['c_real_exct'][jj]>=0 and  parts_real['c_real_sim'][jj]>=0:                     
+    #         num_error+=  0
+    #     else:
+    #         if parts_real['c_real_exct'][jj]<0 and  parts_real['c_real_sim'][jj]<0:                     
+    #             num_error+=  0
+    #         else:
+    #             print(parts_real['c_real_exct'][jj],   '      ', parts_real['c_real_sim'][jj])
+    #             num_error+= 1
         
-    print('error %= ', 
-          np.round(num_error/parts_real.shape[0]*100, 2), 
-          'num incorrect = ', 
-          num_error, 
-          'total = ', 
-          parts_real.shape[0]
-          )      
+    # print('error %= ', 
+    #       np.round(num_error/parts_real.shape[0]*100, 2), 
+    #       'num incorrect = ', 
+    #       num_error, 
+    #       'total = ', 
+    #       parts_real.shape[0]
+    #       )      
     
-    print('\n\n##### L2 norm')
-    error_L2 = 0
-    for jj in  parts_real.index:
-        diff = np.abs(parts_real['c_real_exct'][jj] -  parts_real['c_real_sim'][jj])
-        error = diff/( + 10**(-1*significant_figures) + np.abs(parts_real['c_real_exct'][jj] ) ) 
-        print(error)
-        error_L2+=  error/parts_real.shape[0]
-    print('---')
-    print(error_L2)
+    # print('\n\n##### L2 norm')
+    # error_L2 = 0
+    # for jj in  parts_real.index:
+    #     diff = np.abs(parts_real['c_real_exct'][jj] -  parts_real['c_real_sim'][jj])
+    #     error = diff/( + 10**(-1*significant_figures) + np.abs(parts_real['c_real_exct'][jj] ) ) 
+    #     print(error)
+    #     error_L2+=  error/parts_real.shape[0]
+    # print('---')
+    # print(error_L2)

@@ -25,6 +25,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from functools import wraps
 
+import qiskit
 from qiskit.extensions import IGate,XGate,YGate,ZGate
 from qiskit import QuantumCircuit, execute, BasicAer, transpile
 from qiskit.extensions import UnitaryGate
@@ -37,6 +38,7 @@ from qiskit.providers.aer import QasmSimulator
 
 from MultiQubitGate.functions import multiqubit
 
+from BasicFunctions.test_functions import TestCirc
 
 def timing(f):
     @wraps(f)
@@ -56,6 +58,66 @@ Z_op = np.matrix([[ 1.+0.j,  0.+0.j],
                [ 0.+0.j, -1.+0.j]])
 I2 = np.matrix([[1.+0.j, 0.+0.j],
                 [0.+0.j, 1.+0.j]])
+
+
+
+
+###############################################################################
+@TestCirc
+def getQCirc(circ, Q):    
+    #############
+    # Qiskit error
+    if not isinstance(circ, QuantumCircuit):
+        raise qiskit.circuit.exceptions.CircuitError('The circuit is not an instance of the QuantumCircuit')
+    
+    # TypeError
+    if not isinstance(Q, np.ndarray):
+        if not isinstance(Q, list):
+            raise TypeError(' the provided Pauli string operator is not am instance of list or numpy array ')
+    #############
+
+    
+    circ_Q = QuantumCircuit.copy(circ)
+
+    #############
+    # ValueError
+    ### the number of qubits must be the same as number of operators in Q
+    if not circ_Q.num_qubits == len(Q):
+        raise ValueError('the number of qubits in the circuit is not the same as the  number of Pauli operators in Q')
+    #############
+    
+    
+    for (q, o) in enumerate(Q):
+        if o==0:
+            pass
+        if o==1:
+            circ_Q.x(q)
+        if o==2:
+            circ_Q.y(q)
+        if o==3:
+            circ_Q.z(q)
+            
+    return circ_Q
+
+@TestCirc
+def getUQUCirc(circ, circ_Q):
+    circ_UQU = QuantumCircuit.copy(circ_Q)  ## QU|0>
+    circ_UQU = circ_UQU.compose(QuantumCircuit.copy(circ.inverse()) )## U^QU|0>
+    return circ_UQU ## U^QU|0>
+
+###############################################################################
+
+
+
+
+
+
+
+
+
+
+
+
 
 def getExact(hs, ws):
     ######### exact
@@ -140,29 +202,7 @@ def getBinary(j, nspins):
     return string
 
 
-#######################################
 
-# @timing
-def getQCirc(circ, h):
-    
-    circ_h = QuantumCircuit.copy(circ)
-    
-    for (q, o) in enumerate(h):
-        if o==0:
-            pass
-        if o==1:
-            circ_h.x(q)
-        if o==2:
-            circ_h.y(q)
-        if o==3:
-            circ_h.z(q)
-    return circ_h
-
-# @timing
-def getUQUCirc(circ, circ_h):
-    circ_uhu = QuantumCircuit.copy(circ_h)
-    circ_uhu = circ_uhu.compose(QuantumCircuit.copy(circ.inverse()) )
-    return circ_uhu
 
 
 ##################################
@@ -250,4 +290,12 @@ def getETHInfo(U_t, H_mtx,  delta, time):
 
 
 
+if __name__=='__main__':
     
+    number_qubits= 3
+    
+    Q = [1,2,3]
+    
+    circ = QuantumCircuit(number_qubits)
+    
+    print(getQCirc(circ, Q))

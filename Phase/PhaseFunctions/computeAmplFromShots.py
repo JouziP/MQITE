@@ -24,7 +24,7 @@ def computeAmplFromShots(circ, shots, j_ref, backend = 'qasm_simulator'):
     
     '''
    
-    [counts, j_indxs], df_count = getIndexsFromExecute(circ, shots, backend)
+    df_count = getIndexsFromExecute(circ, shots, backend)
     
     m1 = df_count[0][j_ref]/shots #df_count[0].sum()
     

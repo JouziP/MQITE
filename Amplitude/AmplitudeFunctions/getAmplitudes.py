@@ -14,10 +14,17 @@ import pandas as pd
 
 
 def getAmplitudes( df_count, eta):                
-        pass
+        
+        if not isinstance(eta, int):
+            raise TypeError(' eta is nnot an integer')
+            
+        
+            
+            
         ### amplitudes |cj|
         df_ampl = (df_count/df_count.sum()).apply(lambda x: np.sqrt(x)) ## - checked
         df_ampl = df_ampl.sort_values(0, ascending=False)
+        
         ####################  pick the eta dominant amplitudes |cj|
         df_ampl = df_ampl[:eta]
         
@@ -28,7 +35,7 @@ def getAmplitudes( df_count, eta):
         j_list = df_ampl.index.tolist()
         # df_ampl = df_ampl.sort_index()
         
-        return j_list, df_ampl
+        return df_ampl
     
     
     

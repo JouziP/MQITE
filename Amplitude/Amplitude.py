@@ -9,6 +9,7 @@ Created on Wed Oct  5 16:33:48 2022
 
 
 
+import logging
 
 import numpy as np
 import pandas as pd
@@ -21,23 +22,25 @@ from Amplitude.AmplitudeFunctions.getBenchmark_after import getBenchmark_after
 
 
 class Amplitude:
-    def __init__(self, circ_uhu, shots, eta, significant_figures, machine_precision=10):
-        # self.circ = circ
-        self.circ_uhu = circ_uhu
-        self.shots = shots
+    def __init__(self, circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision=10):
+        logging.info('%s.%s '%(self.__class__.__name__, self.__init__.__name__) )
+        self.circ_Q = circ_Q
+        self.circ_UQU = circ_UQU
+        self.shots_amplitude = shots_amplitude
         self.eta = eta
         self.significant_figures = significant_figures
         self.machine_precision = machine_precision
         
     def __call__(self, ):
-        df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded = self.computeAmplutudes()
-        
-        self.df_ampl_bm = df_ampl_bm
+        # df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded = self.computeAmplutudes()
+        df_ampl = self.computeAmplutudes()
         self.df_ampl = df_ampl
-        self.std_prob = std_prob
-        self.drop_in_peak = drop_in_peak
-        self.m_support = m_support
-        self.m_support_rounded = m_support_rounded
+        
+        # self.df_ampl_bm = df_ampl_bm        
+        # self.std_prob = std_prob
+        # self.drop_in_peak = drop_in_peak
+        # self.m_support = m_support
+        # self.m_support_rounded = m_support_rounded
         
         
         
@@ -63,21 +66,27 @@ class Amplitude:
         '''
         
         #################### |cj|^2 and js upto significant digits - tested +
-        [counts, j_indxs], df_count = self.getIndexsFromExecute(self.circ_uhu, self.shots)   
+        df_count = self.getIndexsFromExecute(self.circ_UQU, self.shots_amplitude)   
         
-        ### some benchmarks before trimming by eta - tested +
-        m_support_rounded, drop_in_peak, m_support, std_prob = self.getBenchmark_before( df_count, self.significant_figures)
         
         ### keep eta of them -> {|c_j|} = df_ampl - tested +
         ### the j's and c_j's from shots and observed bit string --> NO state vector
-        j_list, df_ampl = self.getAmplitudes(df_count, self.eta)
+        df_ampl = self.getAmplitudes(df_count, self.eta)
         
-        ### some other bm after trimming - tested 
-        ### it returns the state vector values of observed j's
-        df_ampl_bm = self.getBenchmark_after( df_ampl, j_list, self.circ_uhu, self.significant_figures, self.machine_precision)
+        return df_ampl
+    
+    
+        # ### some benchmarks before trimming by eta - tested +
+        # m_support_rounded, drop_in_peak, m_support, std_prob = self.getBenchmark_before( df_count, self.significant_figures)
         
         
-        return df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded
+        
+        # ### some other bm after trimming - tested 
+        # ### it returns the state vector values of observed j's
+        # df_ampl_bm = self.getBenchmark_after( df_ampl, j_list, self.circ_uhu, self.significant_figures, self.machine_precision)
+        
+        
+        # return df_ampl_bm, df_ampl, std_prob, drop_in_peak, m_support, m_support_rounded
         
         
         
