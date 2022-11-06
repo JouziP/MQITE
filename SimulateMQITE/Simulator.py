@@ -103,7 +103,7 @@ class Simulator():
                 self.ampObj = Amplitude(circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision)
                 
                 ### execution, test, save results, etc.
-                self.ampObj(TestLevel=self.AmplTestLevel)
+                self.ampObj()
                 
                 # ### get phases
                 self.phaseObj = Phase(self.ampObj, 

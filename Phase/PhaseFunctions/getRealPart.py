@@ -21,8 +21,6 @@ from MultiQubitGate.functions import multiqubit
 
 from BasicFunctions.functions import getBinary, getState
 from Phase.PhaseFunctions.computeAmplFromShots import computeAmplFromShots
-
-from Phase.PhaseTests.testImagPart_m1 import test1, test2
         
 ####################################################################
 ####################################################################

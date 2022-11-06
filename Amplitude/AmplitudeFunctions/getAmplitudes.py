@@ -14,26 +14,28 @@ import pandas as pd
 
 
 def getAmplitudes( df_count, eta):                
+        '''
         
+         return the |c_j| of the most largest amplitudes
+     
+        '''
         if not isinstance(eta, int):
-            raise TypeError(' eta is nnot an integer')
+            raise TypeError(' eta is not an integer')
             
         
             
             
         ### amplitudes |cj|
         df_ampl = (df_count/df_count.sum()).apply(lambda x: np.sqrt(x)) ## - checked
-        df_ampl = df_ampl.sort_values(0, ascending=False)
+        df_ampl = df_ampl.sort_values('n_j', ascending=False)
         
         ####################  pick the eta dominant amplitudes |cj|
         df_ampl = df_ampl[:eta]
         
         #####  making sure they are all non-zero
-        df_ampl = df_ampl.loc[df_ampl[0]!=0]
+        df_ampl = df_ampl.loc[df_ampl['n_j']!=0]
         
-        #### js of non-zero elements 
-        j_list = df_ampl.index.tolist()
-        # df_ampl = df_ampl.sort_index()
+        df_ampl.columns=['|c_j|']
         
         return df_ampl
     

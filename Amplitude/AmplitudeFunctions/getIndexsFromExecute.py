@@ -67,10 +67,10 @@ def getIndexsFromExecute(circ, shots, backend = 'qasm_simulator'):
     result = job.result()
     counts = result.get_counts(compiled_circuit)
     
-    j_indxs = np.sort(list([key for key in counts.int_outcomes().keys()]))
     
     ### Using Pandas dataframe to organize
     df_count = pd.DataFrame([counts.int_outcomes()]).T   
+    df_count.columns=['n_j']
     
     return df_count
 

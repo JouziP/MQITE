@@ -17,7 +17,7 @@ import pandas as pd
 
 from Amplitude.AmplitudeFunctions.getIndexsFromExecute import getIndexsFromExecute
 from Amplitude.AmplitudeFunctions.getAmplitudes import getAmplitudes
-from Amplitude.AmplitudeFunctions.getStateVectorValuesOfAmpl import getStateVectorValuesOfAmpl
+from BasicFunctions.getStateVectorValuesOfAmpl import getStateVectorValuesOfAmpl
 
 
 class Amplitude:
@@ -30,51 +30,52 @@ class Amplitude:
         self.significant_figures = significant_figures
         self.machine_precision = machine_precision
         
-    def __call__(self, TestLevel=0):
+    def __call__(self, ):
         
-        if TestLevel==0:
+        
             df_ampl = self.computeAmplutudes()
             self.df_ampl = df_ampl
             
-        if TestLevel==1:
+        # if TestLevel==1:
             
-            logger.info('%s.%s '%(self.__class__.__name__, self.__call__.__name__) )
+        #     logger.info('%s.%s '%(self.__class__.__name__, self.__call__.__name__) )
+        #     logger.info('TestLevel %s: preparing state vector amplitudes'%(TestLevel) )
             
-            ### from shots
-            df_ampl = self.computeAmplutudes()
-            self.df_ampl = df_ampl
+        #     ### from shots
+        #     df_ampl = self.computeAmplutudes()
+        #     self.df_ampl = df_ampl
             
-            ### Delta metric
-            df_ampl_sorted = df_ampl.sort_values(0, ascending=False)
-            if df_ampl_sorted.shape[0]>1:
-                self.Delta__high_2_low = df_ampl_sorted.values[0,0] - df_ampl_sorted.values[1,0]
-                self.Delta__high_2_low_definition='The difference between the largest observed amlitude and the next largest amplitude'
-                ### log it
-                logger.debug('\n')
-                logger.debug('Delta__high_2_low_definition = %s'%(self.Delta__high_2_low_definition) )
-                logger.debug('Delta__high_2_low = %s'%(self.Delta__high_2_low) )
+        #     ### Delta metric
+        #     df_ampl_sorted = df_ampl.sort_values(0, ascending=False)
+        #     if df_ampl_sorted.shape[0]>1:
+        #         self.Delta__high_2_low = df_ampl_sorted.values[0,0] - df_ampl_sorted.values[1,0]
+        #         self.Delta__high_2_low_definition='The difference between the largest observed amlitude and the next largest amplitude'
+        #         ### log it
+        #         logger.debug('\n')
+        #         logger.debug('Delta__high_2_low_definition = %s'%(self.Delta__high_2_low_definition) )
+        #         logger.debug('Delta__high_2_low = %s'%(self.Delta__high_2_low) )
                 
-            ### bm 
-            df_ampl_bm = getStateVectorValuesOfAmpl( df_ampl.index.tolist(),
-                                                 self.circ_UQU,
-                                                 self.significant_figures, 
-                                                 self.machine_precision)
-            self.df_ampl_bm=df_ampl_bm
+        #     ### bm 
+        #     df_ampl_bm = getStateVectorValuesOfAmpl( df_ampl.index.tolist(),
+        #                                          self.circ_UQU,
+        #                                          self.significant_figures, 
+        #                                          self.machine_precision)
+        #     self.df_ampl_bm=df_ampl_bm
             
                         
-            ### sort    
-            df_ampl_bm = df_ampl_bm.sort_index()
-            df_ampl =  df_ampl.sort_index()
+        #     ### sort    
+        #     df_ampl_bm = df_ampl_bm.sort_index()
+        #     df_ampl =  df_ampl.sort_index()
                 
-            df_bm_vs_qc = pd.concat(
-                (df_ampl.round(self.significant_figures), df_ampl_bm.round(self.significant_figures)), 
-                axis = 1)
+        #     df_bm_vs_qc = pd.concat(
+        #         (df_ampl.round(self.significant_figures), df_ampl_bm.round(self.significant_figures)), 
+        #         axis = 1)
             
-            df_bm_vs_qc.columns = ['QC', 'SV']
-            self.df_bm_vs_qc = df_bm_vs_qc
+        #     df_bm_vs_qc.columns = ['QC', 'SV']
+        #     self.df_bm_vs_qc = df_bm_vs_qc
             
-            ### log it
-            logger.debug('df_bm_vs_qc =\n\n %s \n\n'%(self.df_bm_vs_qc) )                        
+        #     ### log it
+        #     logger.debug('df_bm_vs_qc =\n\n %s \n\n'%(self.df_bm_vs_qc) )                        
 
 
         
@@ -105,9 +106,9 @@ class Amplitude:
         
         
     @staticmethod
-    def getIndexsFromExecute( circ, shots, backend = 'qasm_simulator'):
+    def getIndexsFromExecute( circ_UQU, shots, backend = 'qasm_simulator'):
         pass
-        return  getIndexsFromExecute(circ, shots, backend)
+        return  getIndexsFromExecute(circ_UQU, shots, backend)
         
     @staticmethod
     def getAmplitudes( df_count, eta): 
