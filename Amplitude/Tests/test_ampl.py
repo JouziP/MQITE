@@ -17,7 +17,7 @@ from BasicFunctions.getStateVectorValuesOfAmpl import getStateVectorValuesOfAmpl
 
 
 
-from Amplitude.Amplitude import Amplitude
+from Amplitude.amplitude import AmplitudeClass
 
 
 class TestAmplitude:
@@ -56,7 +56,7 @@ class TestAmplitude:
         self.circ_UQU = getUQUCirc(self.circ_U, self.circ_Q)
         
         
-        df_count      = Amplitude.getIndexsFromExecute(self.circ_UQU, self.shots)
+        df_count      = AmplitudeClass.getIndexsFromExecute(self.circ_UQU, self.shots)
         self.df_count = pd.DataFrame.copy(df_count)
         ############
         
@@ -97,7 +97,7 @@ class TestAmplitude:
         
         if self.test1():
             try:
-                df_ampl = Amplitude.getAmplitudes(self.df_count, self.eta)
+                df_ampl = AmplitudeClass.getAmplitudes(self.df_count, self.eta)
             except:
                 print('Something not right with Amplitude.getAmplitudes')
                 return False
@@ -139,9 +139,8 @@ class TestAmplitude:
         self.circ_UQU = getUQUCirc(self.circ_U, self.circ_Q)
         
         
-        amplObj = Amplitude(self.circ_Q, self.circ_UQU, self.shots, self.eta, self.significant_figures)
+        amplObj = AmplitudeClass(self.circ_Q, self.circ_UQU, self.shots, self.eta, self.significant_figures)
         
-        amplObj()
         
         ### The |c_j| observed from execution of the ciruicts
         df_ampl = amplObj.df_ampl

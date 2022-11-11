@@ -15,12 +15,13 @@ from BasicFunctions.getQCirc import getQCirc
 from BasicFunctions.getRandomQ import getRandomQ
 from BasicFunctions.getRandomU import getRandomU
 from BasicFunctions.getUQUCirc import getUQUCirc
-from BasicFunctions.getStateVectorValuesOfAmpl import getStateVectorValuesOfAmpl
+from BasicFunctions.getState import getState
 
 
 
-from Amplitude.Amplitude import Amplitude
 
+from Amplitude.amplitude import AmplitudeClass as Amplitude
+from Phase.phase import Phase
 
 
 class TestPhase:
@@ -38,32 +39,31 @@ class TestPhase:
         self.machine_precision = inputs['machine_precision']  
         self.significant_figures = inputs['significant_figures'] 
         self.eta = inputs['eta']
-        self.shots = inputs['shots']
+        self.shots_amplitude = inputs['shots-amplitude']
+        self.shots_phase = inputs['shots-phase']
         self.Q = inputs['Q']
         
-     
-        
-    def test1(self, ):
-        '''
+    
         
         
-        there may be cases where the number of obseved bit strings are more
-        than eta !
-        '''
-        
-        print('TEST 1 : GENERAL SANITY CHECK ')
-        
-        self.circ_U = getRandomU(nspins, num_layers)        
-        self.circ_Q = getQCirc(self.circ_U, self.Q)
-        self.circ_UQU = getUQUCirc(self.circ_U, self.circ_Q)
-          
-    def test2(self, ):
+    def test2(self, amplObj, circ_UQU, circ_U, Q):        
         '''
         
         '''
         
-        print('\n\nTEST 2: GENERAL UNIT TEST of METHODS ')
+        self.df_ampl = pd.DataFrame.copy(amplObj.df_ampl)
+        js = df_ampl.index.tolist()
+        state_vec= getState(circ_UQU, self.machine_precision) 
+        state_vec_js = state_vec[js, :]
+        self.df_ampl_benchmark = pd.DataFrame([ np.sqrt(x[0,0]  *x[0,0].conjugate()).real for x in state_vec_js ])
+        self.df_ampl_benchmark.columns=['n_j']
+        self.df_ampl_benchmark.index=js
+        self.df = pd.concat((self.df_ampl, self.df_ampl_benchmark), axis=1)
+        self.df.columns=['qc','stvec']
         
+        self.phaseObj = Phase(amplObj, 
+                              self.nspins, 
+                              circ_U, Q, self.significant_figures, self.shots_phase, )
         
         
 if __name__=='__main__':
@@ -79,13 +79,18 @@ if __name__=='__main__':
     ################################################################
     seed = 1211
     nspins = 9    
-    num_layers =3
+    num_layers =2
     num_itr =1
     machine_precision = 10  
     significant_figures = 3 
     eta = 100
     shots = 10**(2*significant_figures)
+    shots_amplitude = shots
+    shots_phase = shots
     Q = getRandomQ(nspins)
+    
+    
+    
     
     
     inputs={}
@@ -96,6 +101,22 @@ if __name__=='__main__':
     inputs['machine_precision']=machine_precision
     inputs['significant_figures']=significant_figures
     inputs['eta']=eta
-    inputs['shots']=shots    
+    inputs['shots-amplitude']=shots_amplitude    
+    inputs['shots-phase']=shots_phase    
     inputs['Q']=Q
+    
+    testPhase = TestPhase(**inputs)
+    circ_U = getRandomU(nspins, num_layers) 
+    circ_Q = getQCirc(circ_U, Q)
+    circ_UQU = getUQUCirc(circ_U, circ_Q)
+    
+    amplObj  = Amplitude(circ_U, circ_UQU, shots_amplitude, eta, significant_figures)
+    
+    df_ampl = amplObj.df_ampl
+    print(df_ampl)
+    testPhase.test2(amplObj, circ_UQU,  circ_U, Q)
+    print(testPhase.df)
+    
+    
+    
     

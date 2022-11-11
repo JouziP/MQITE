@@ -6,16 +6,19 @@ Created on Thu Oct 13 12:40:38 2022
 @author: pejmanjouzdani
 """
 
-from SimulateMQITE.log_config import logger
+# # from SimulateMQITE.log_config import logger
 
 import pandas as pd
 import numpy as np
 
 
-from Phase.PhaseFunctions.getImagPart import getImagPart
-from Phase.PhaseFunctions.getRealPart import getRealPart
+# from Phase.PhaseFunctions.getImagPart import getImagPart
+# # from Phase.PhaseFunctions.getRealPart import getRealPart
+
+
 
 from Phase.PhaseFunctions.computeAmplFromShots import computeAmplFromShots
+
 
 from Phase.PhaseFunctions.getImagPart_base_circ import getImagPart_base_circ
 from Phase.PhaseFunctions.getImagPart_ref_circ import getImagPart_ref_circ
@@ -26,15 +29,15 @@ from Phase.PhaseFunctions.getRealPart_ref_circ import getRealPart_ref_circ
 class Phase:
     ##### CONSTRUCTOR
     def __init__(self, 
-                 amplObj,
-                 nspins, 
-                 circ, 
-                 Q,
-                 significant_figure, 
-                 shots,
-                 machine_precision=10,
-                 j_ref=None,
-                 gamma= np.pi/10):
+                  amplObj,
+                  nspins, 
+                  circ, 
+                  Q,
+                  significant_figure, 
+                  shots,
+                  machine_precision=10,
+                  j_ref=None,
+                  gamma= np.pi/10):
         
         #### static
         self.amplObj            = amplObj
@@ -69,8 +72,6 @@ class Phase:
         
         ### Q.COMPUTE AND STATE-VECTOR BENCHMARK
         if TestLevel==1:
-            logger.info('%s.%s '%(self.__class__.__name__, self.__call__.__name__) )
-            logger.info('TestLevel %s: preparing state vector phases'%(TestLevel) )
             
             self.parts_imag = self.getImagPart()
             self.parts_real = self.getRealPart()
@@ -79,8 +80,7 @@ class Phase:
         
         ### Q.COMPUTE AND STATE-VECTOR BENCHMARK
         if TestLevel==2:
-            logger.info('%s.%s '%(self.__class__.__name__, self.__call__.__name__) )
-            logger.info('TestLevel %s: preparing state vector phases'%(TestLevel) )
+            
             
             pass # different scenario: the amplitude is from state-vector etc.
             
@@ -145,7 +145,7 @@ class Phase:
             
             #### compute the sin of theta        
             imag_part = (m_ref - (1/4) * c2_2**2 *\
-                         (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
+                          (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
                             ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2)) 
         
             #### round to allowed prcision
@@ -190,7 +190,7 @@ class Phase:
             
             #### compute the cos of theta        
             real_part = (m1 - (1/4) * c2_2**2 *\
-                         (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
+                          (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
                             ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2))
             
             #### round to allowed prcision
