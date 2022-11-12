@@ -91,7 +91,7 @@ class TestPhase:
         
         m1s_stvec = []
         for j2 in js:
-            circ_uhu_adj = Phase.getImagPart_ref_circ(phaseObj.j_ref, j2, nspins,  circ_adj)
+            circ_uhu_adj = Phase.getRealPart_ref_circ(phaseObj.j_ref, j2, nspins,  circ_adj)
             state_vec_adj = getState(circ_uhu_adj, machine_precision) 
             m1 = state_vec_adj[phaseObj.j_ref, 0]
             m1s_stvec .append( (m1.conjugate() * m1 ).real )
