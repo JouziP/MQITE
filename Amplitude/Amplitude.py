@@ -18,9 +18,9 @@ from qiskit import Aer
 
 
 class AmplitudeClass:
-    def __init__(self, circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision=10):
-        
-        self.circ_Q = circ_Q
+    def __init__(self, circ_U, circ_UQU, Q, shots_amplitude, eta, significant_figures, machine_precision=10):
+        self.Q = Q
+        self.circ_U = circ_U
         self.circ_UQU = circ_UQU
         self.shots_amplitude = shots_amplitude
         self.eta = eta
@@ -112,7 +112,7 @@ class AmplitudeClass:
         df_count  = df_count/chi
         
         df_ampl = df_count.apply(lambda x: np.sqrt(x))
-        
+        df_ampl.columns=['|c_j|']
      
         return df_ampl
    
@@ -160,14 +160,14 @@ if __name__=='__main__':
     
     
     
-    circ = getRandomU(nspins, num_layers)
+    circ_U = getRandomU(nspins, num_layers)
     Q = getRandomQ(nspins)
-    circ_Q = getQCirc(circ, Q)
-    circ_UQU = getUQUCirc(circ, circ_Q)
+    circ_UQ = getQCirc(circ_U, Q)
+    circ_UQU = getUQUCirc(circ_U, circ_UQ)
     
     ################################# TEST
     ###### Constructor
-    myAmplObj = AmplitudeClass( circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision=10)
+    myAmplObj = AmplitudeClass( circ_U, circ_UQU, Q, shots_amplitude, eta, significant_figures, machine_precision=10)
     print(myAmplObj.df_count)
     print(myAmplObj.df_ampl)
     

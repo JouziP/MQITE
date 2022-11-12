@@ -139,7 +139,7 @@ class TestAmplitude:
         self.circ_UQU = getUQUCirc(self.circ_U, self.circ_Q)
         
         
-        amplObj = AmplitudeClass(self.circ_Q, self.circ_UQU, self.shots, self.eta, self.significant_figures)
+        amplObj = AmplitudeClass(self.circ_U, self.circ_UQU, self.Q, self.shots, self.eta, self.significant_figures)
         
         
         ### The |c_j| observed from execution of the ciruicts

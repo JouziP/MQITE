@@ -7,15 +7,15 @@ Created on Wed Nov  2 13:32:55 2022
 """
 import os
 
-from  SimulateMQITE.log_config import logger
+# from  SimulateMQITE.log_config import logger
 
 
 
 from qiskit import QuantumCircuit
 
 
-from Amplitude.Amplitude import Amplitude
-from Phase.Phase import Phase
+from Amplitude.amplitude import AmplitudeClass as Amplitude
+from Phase.phase import Phase
 from UpdateCircuit.UpdateCircuit import UpdateCircuit
 
 from BasicFunctions.functions import  getUQUCirc, getQCirc
@@ -61,7 +61,7 @@ class Simulator():
         self.machine_precision = machine_precision
         self.AmplTestLevel =AmplTestLevel
         ### Variable Attributes
-        self.circ = QuantumCircuit(nspins)
+        self.circ_U = QuantumCircuit(nspins)
         
         
         
@@ -82,37 +82,38 @@ class Simulator():
         machine_precision   = self.machine_precision
         significant_figures = self.significant_figures
         
-        #### initial circ
-        circ                = self.circ
+        #### initial circ_U
+        circ_U              = self.circ_U
         
         for t in range(int(T/delta)):
-            logger.debug('\n=== === --> time step: %d \n'%( t) )
+            # logger.debug('\n=== === --> time step: %d \n'%( t) )
             
             for k in range(n_H):
-                logger.debug('=== === --> t: %d , k: %d \n'%( t, k) )
-
+                # logger.debug('=== === --> t: %d , k: %d \n'%( t, k) )
+                
+                print('t = ', t, ' ---  k= ' , k)
         
                 Q = Qs[k]
                 w = ws[k]                
                 delta_k = delta * w
                 
-                circ_Q = getQCirc(QuantumCircuit.copy(circ), Q)                
-                circ_UQU = getUQUCirc(QuantumCircuit.copy(circ), circ_Q)
+                circ_Q = getQCirc(QuantumCircuit.copy(circ_U), Q)                
+                circ_UQU = getUQUCirc(QuantumCircuit.copy(circ_U), circ_Q)
                 
                 # ### constructor
                 self.ampObj = Amplitude(circ_Q, circ_UQU, shots_amplitude, eta, significant_figures, machine_precision)
                 
-                ### execution, test, save results, etc.
-                self.ampObj()
+                # ### execution, test, save results, etc.
+                # self.ampObj()
                 
                 # ### get phases
                 self.phaseObj = Phase(self.ampObj, 
-                                 nspins, 
-                                 QuantumCircuit.copy(circ),
-                                 Q, 
-                                 significant_figures, 
-                                 shots_phase, 
-                                 machine_precision)
+                                  nspins, 
+                                  QuantumCircuit.copy(circ_U), # circ_U
+                                  Q, 
+                                  significant_figures, 
+                                  shots_phase, 
+                                  machine_precision)
                 
                 ### compute c_j^(r) and c_j^(im) for all j's in AmpObj
                 self.phaseObj()
@@ -124,10 +125,10 @@ class Simulator():
                 updateCircuitObj = UpdateCircuit()
                 
                 ### compute stuff
-                circ_new, multigate_gate_stat =  updateCircuitObj(js, ys_j, QuantumCircuit.copy(circ),)
+                circ_new, multigate_gate_stat =  updateCircuitObj(js, ys_j, QuantumCircuit.copy(circ_U),)
                 
                 ####
-                circ = QuantumCircuit.copy(updateCircuitObj.circ_new) 
+                circ_U = QuantumCircuit.copy(updateCircuitObj.circ_new) 
     
     
     @staticmethod

@@ -25,10 +25,50 @@ def computeAmplFromShots(circ, shots, j_ref, backend = 'qasm_simulator'):
     
     
     '''
-   
-    df_count = Amplitude.getIndexsFromExecute(circ, shots, backend)
-    
-    m1 = df_count['n_j'][j_ref]/shots #df_count[0].sum()
+   #### FIRST ATTEMPT
+    df_count = Amplitude.getIndexsFromExecute(circ, shots, backend)    
+    try:
+        
+        m1 = df_count['n_j'][j_ref]/shots #df_count[0].sum()           
+        # print('------------ RESOLVED AT {shots} SHOTS; FIRST ATTEMPT ---------')
+    except KeyError :
+        print('WARNING: FIRST CIRCUIT RUN FAILED !')
+        print('j_ref is not oobserved in the bitstrings... running the circuit with increased shots')
+        print(f"Increasing shots from {shots} to  {10 * shots}")      
+        print()
+        
+        #### SECOND ATTEMPT -> INCREASE THE SHOTS
+        df_count = Amplitude.getIndexsFromExecute(circ, 10*shots, backend)
+        try:
+            m1 = df_count['n_j'][j_ref]/shots #df_count[0].sum()
+            print('------------ RESOLVED AT {10*shots} SHOTS; SECOND ATTEMPT ---------')
+        except KeyError:
+            print('WARNING: SECOND CIRCUIT RUN FAILED !')
+            print('j_ref is not oobserved in the bitstrings in the SECOND circuit run...')
+            print(f"Increasing shots from  {10 * shots} to  {100*shots}")        
+            print()
+            
+            #### THIRD ATTEMPT --> INCREASE SHOTS
+            df_count = Amplitude.getIndexsFromExecute(circ, 100*shots, backend)
+            try:
+                m1 = df_count['n_j'][j_ref]/shots #df_count[0].sum()
+                print('------------ RESOLVED AT {100*shots} SHOTS; THIRD ATTEMPT ---------')
+            except:
+                print('WARNING: THIRD CIRCUIT RUN FAILED !')
+                print('j_ref is not oobserved in the bitstrings in the THIRD circuit run...')
+                print(f"Increasing shots from {100 *  shots} to  {1000 * shots}")        
+                print()
+                
+                #### FORTH ATTEMPT --> INCREASE SHOTS
+                df_count = Amplitude.getIndexsFromExecute(circ, 1000*shots, backend) 
+                try:
+                    m1 = df_count['n_j'][j_ref]/shots #df_count[0].sum()
+                    print('------------ RESOLVED AT {1000*shots} SHOTS; FORTH ATTEMPT ---------')
+                except KeyError:
+                    raise
+     
+                
+            
     
     return m1
 

@@ -10,21 +10,15 @@ Created on Thu Oct 13 12:40:38 2022
 
 import pandas as pd
 import numpy as np
+from qiskit import QuantumCircuit
 
 
-# from Phase.PhaseFunctions.getImagPart import getImagPart
-# # from Phase.PhaseFunctions.getRealPart import getRealPart
 
-
+from MultiQubitGate.functions import multiqubit
+from BasicFunctions.functions import getBinary
 
 from Phase.PhaseFunctions.computeAmplFromShots import computeAmplFromShots
 
-
-from Phase.PhaseFunctions.getImagPart_base_circ import getImagPart_base_circ
-from Phase.PhaseFunctions.getImagPart_ref_circ import getImagPart_ref_circ
-
-from Phase.PhaseFunctions.getRealPart_base_circ import getRealPart_base_circ
-from Phase.PhaseFunctions.getRealPart_ref_circ import getRealPart_ref_circ
 
 class Phase:
     ##### CONSTRUCTOR
@@ -64,28 +58,15 @@ class Phase:
     ##### OVERWRITING () OPERATOR     
     def __call__(self, TestLevel=0):
         
-        ### PURE Q.COMPUTE
-        if TestLevel==0:
-            self.parts_imag = self.getImagPart()
-            self.parts_real = self.getRealPart()
-            return 
+        self.getImagPart()
+        self.getRealPart()
         
-        ### Q.COMPUTE AND STATE-VECTOR BENCHMARK
-        if TestLevel==1:
-            
-            self.parts_imag = self.getImagPart()
-            self.parts_real = self.getRealPart()
-            ### test if the parts real is the same as in the state_vector            
-            return 
-        
-        ### Q.COMPUTE AND STATE-VECTOR BENCHMARK
-        if TestLevel==2:
             
             
-            pass # different scenario: the amplitude is from state-vector etc.
-            
-            
-        
+    
+    
+    
+    
     ##### TURN C_J TO Y_J
     def getY(self, delta):
         '''
@@ -124,27 +105,36 @@ class Phase:
     ##### Q. COMPUTE  IMAG PART OF C_J
     def getImagPart(self,):
         
-        circ_adj = getImagPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
+        circ_adj = self.getImagPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
         
         #################### for each j2  The T_{j_ref -> j2} is different 
         indexs = self.df_ampl.index  ### the observed bit strings from shots; j's
-        parts_imag= [[ 0 ]]  # ref has c_j_ref = 0 + 0j
-        part_indexs=[self.j_ref]
+        parts_imag= [] #[[ 0 ]]  # ref has c_j_ref = 0 + 0j
+        part_indexs=[] #[self.j_ref]
+        m1s = []
+        c2s = []
         
         for j2 in indexs:
-            circ_uhu_adj = getImagPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
+            circ_uhu_adj = self.getImagPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
                         
             #####  amplitude of m_ref from shots 
-            m_ref, __ = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
+            m_ref = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
+            ### collect results            
+            m1s.append(m_ref)
+            ###
             m_ref = np.round(m_ref, self.significant_figure)
             
             
-            #### amplitude  from shots
-            c2_2 = self.df_ampl[0][j2]**2 ### |c_j|^2
-            c2_2    = np.round(c2_2, self.significant_figure)
+            #### amplitude  from shots            
+            c2 = self.df_ampl['|c_j|'][j2]
+            ### collect results
+            c2s.append(c2)
+            ####
+            c2_2 = c2**2 ### |c_j|^2
+            self.c2_2    = np.round(c2_2, self.significant_figure)
             
             #### compute the sin of theta        
-            imag_part = (m_ref - (1/4) * c2_2**2 *\
+            imag_part = (m_ref - (1/4) * self.c2_2  *\
                           (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
                             ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2)) 
         
@@ -159,37 +149,51 @@ class Phase:
         parts_imag = pd.DataFrame(parts_imag, index= part_indexs).round(self.significant_figure)
         parts_imag.columns=[ 'c_imag_sim' ]    
     
-    
+        ###
+        m1s = pd.DataFrame(m1s, index= part_indexs)
+        m1s.columns=[ 'm1s-imag-sim' ]  
+        c2s = pd.DataFrame(c2s, index= part_indexs)       
+        c2s.columns=[ 'c2s-imag-sim' ]  
+        
+        ### attribute to the obj
+        self.parts_imag = parts_imag
+        self.parts_real_m1s =  m1s
+        self.parts_real_c2s =  c2s
+        
     
     
     ##### Q. COMPUTE  REAL PART OF C_J
-    def getRealPart(self,):        
-        
-        circ_adj = getRealPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
-        
+    def getRealPart(self,):                
+        circ_adj = self.getRealPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
         #################### for each j2  The T_{j_ref -> j2} is different 
         indexs = self.df_ampl.index  ### the observed bit strings from shots; j's
-        parts_real= [[ 0]]  # ref has c_j_ref = 0 + 0j
-        part_indexs=[self.j_ref]
+        parts_real= []# [[ 0]]  # ref has c_j_ref = 0 + 0j
+        part_indexs= [] #[self.j_ref]
+        m1s = []
+        c2s = []
         
         for j2 in indexs:
-            circ_uhu_adj = getRealPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
-            #####  from shots
-            m1, __ = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
-            m1 = np.round(m1, self.significant_figure)
-            
-            
-           
-                           
+            circ_uhu_adj = self.getRealPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
+            ####  from shots
+            m_ref = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
+            ### collect results            
+            m1s.append(m_ref)
+            ####
+            m_ref = np.round(m_ref, self.significant_figure)
+                                       
             #### amplitude  from shots
-            c2_2 = self.df_ampl[0][j2]**2 ### |c_j|^2
-            c2_2    = np.round(self.c2_2, self.significant_figure)
+            c2 = self.df_ampl['|c_j|'][j2]
+            ### collect results
+            c2s.append(c2)
+            #### 
+            c2_2 = c2**2 ### |c_j|^2
+            self.c2_2    = np.round(c2_2, self.significant_figure)
             
             
             
             
             #### compute the cos of theta        
-            real_part = (m1 - (1/4) * c2_2**2 *\
+            real_part = (m_ref - (1/4) * self.c2_2 *\
                           (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
                             ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2))
             
@@ -202,5 +206,124 @@ class Phase:
            
         ### final results
         parts_real = pd.DataFrame(parts_real, index= part_indexs).round(self.significant_figure)        
-        parts_real.columns=[ 'c_real_sim' ]    
+        parts_real.columns=[ 'c_real_sim' ]   
         
+        ###
+        m1s = pd.DataFrame(m1s, index= part_indexs)
+        m1s.columns=[ 'm1s-real-sim' ]  
+        c2s = pd.DataFrame(c2s, index= part_indexs)       
+        c2s.columns=[ 'c2s-real--sim' ]  
+        
+        ### attribute to the obj
+        self.parts_real =  parts_real
+        self.parts_real_m1s =  m1s
+        self.parts_real_c2s =  c2s
+        
+    ######## TOOLKIT
+    @staticmethod
+    def computeAmplFromShots(circ_uhu_adj, shots, j_ref):
+        return computeAmplFromShots(circ_uhu_adj, shots, j_ref)
+    
+    
+    @staticmethod
+    def getImagPart_base_circ(nspins, circ_U , Q, j_ref,  gamma =   np.pi/10):
+        
+        circ_adj = QuantumCircuit(nspins+1)
+        
+        circ_adj.ry(gamma, qubit=-1)  ### R_gamma
+        circ_adj.x(qubit=-1)  ### X
+        
+        ### U
+        ### attaches U to the q=1 ... q=n qubits, while q=0 is the ancillary 
+        circ_adj = circ_adj.compose(QuantumCircuit.copy(circ_U) ) 
+        
+        ### control-Q ; Ancillary - n target 
+        for (q,o) in enumerate(Q):
+            if o==1:            
+                circ_adj.cx(-1, q)
+            if o==2:
+                circ_adj.cy(-1, q)
+            if o==3:
+                circ_adj.cz(-1, q)
+        
+        ### U^    
+        circ_adj = circ_adj.compose(QuantumCircuit.copy(circ_U).inverse())
+        
+        ### control-P_{0 j_ref}
+        circ_adj.x(qubit=nspins)    
+        J1 = list(getBinary(j_ref, nspins)) + [0]
+        
+        for (q,o) in enumerate(J1):
+            if o==1:            
+                circ_adj.cx(nspins, q)                           
+        circ_adj.x(nspins)  
+        
+        
+        
+    @staticmethod
+    def getImagPart_ref_circ(j_ref, j2,nspins,  circ_adj):
+        
+        #### T Gate        
+        p_12_int = j2^j_ref                
+        ## operator
+        P_12 = getBinary(p_12_int, nspins).tolist()+[0] #bitstring array of p12
+        mult_gate, op_count = multiqubit(P_12, np.pi/4) # turned into T gate
+        circ_uhu_adj = circ_adj.compose( mult_gate ) #add to the circuit
+        
+        return circ_uhu_adj
+    
+    
+    
+    @staticmethod  
+    def getRealPart_ref_circ(j_ref, j2,nspins,  circ_adj):
+        
+        #### T Gate        
+        p_12_int = j2^j_ref                
+        ## operator
+        P_12 = getBinary(p_12_int, nspins).tolist()+[0] #bitstring array of p12
+        mult_gate, op_count = multiqubit(P_12, np.pi/4) # turned into T gate
+        circ_uhu_adj = circ_adj.compose( mult_gate ) #add to the circuit
+        
+        return circ_uhu_adj
+    
+    
+    @staticmethod
+    def getRealPart_base_circ(nspins, circ_U , Q, j_ref,  gamma =   np.pi/10):
+
+
+        circ_adj = QuantumCircuit(nspins+1)
+        
+        circ_adj.ry(gamma, qubit=-1)  ### R_gamma
+        circ_adj.x(qubit=-1)  ### X
+        
+        ### U
+        ### attaches U to the q=1 ... q=n qubits, while q=0 is the ancillary 
+        circ_adj = circ_adj.compose(QuantumCircuit.copy(circ_U) ) 
+        
+        ### control-Q ; Ancillary - n target 
+        for (q,o) in enumerate(Q):
+            if o==1:            
+                circ_adj.cx(-1, q)
+            if o==2:
+                circ_adj.cy(-1, q)
+            if o==3:
+                circ_adj.cz(-1, q)
+        
+        ### U^    
+        circ_adj = circ_adj.compose(QuantumCircuit.copy(circ_U).inverse())
+        
+        ### control-P_{0 j_ref}
+        circ_adj.x(qubit=nspins)    
+        J1 = list(getBinary(j_ref, nspins)) + [0]
+        
+        for (q,o) in enumerate(J1):
+            if o==1:            
+                circ_adj.cx(nspins, q)                           
+        circ_adj.x(nspins)  
+        
+        
+        ### S and H on ancillary
+        circ_adj.s(-1)  
+        circ_adj.h(nspins)
+
+        return circ_adj
