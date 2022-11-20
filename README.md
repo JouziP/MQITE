@@ -5,7 +5,7 @@ The program has the following main packages:
 
 * Amplitude: contains the class Amplitude that runs a circuit UQU|0> on a quasm simulators, computes the amplitudes |c_j|
 
-* Phase: contains the class Phase which uses and Amplitude object to construct additional circuit (Appendix B) and computes the real and imaginary parts of every observed c_j from Amplitude. It also translate c_j into parameter (y_j).
+* Phase: contains the class Phase which uses and Amplitude object to construct additional circuit (Appendix B) and computes the real and imaginary parts of every observed c_j from Amplitude. It also translates c_j into parameter (y_j).
 
 * UpdateCircuit: uses the ccomputed c_j (real, imaginary) to update circuit. This is done by creating a layer of gates and adding them to the start of the current instruction.
 
