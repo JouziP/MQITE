@@ -26,6 +26,8 @@ class AmplitudeClass:
         self.eta = eta
         self.significant_figures = significant_figures
         self.machine_precision = machine_precision
+        
+        ############################ OUTPUTS
         #################### |cj|^2 and js upto significant digits 
         self.df_count = self.getIndexsFromExecute(self.circ_UQU, self.shots_amplitude)   
         ### keep eta of them -> {|c_j|} = df_ampl 

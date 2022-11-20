@@ -125,11 +125,13 @@ class TestPhase:
         c2_stvec = df_ampl_sim_vs_stvec['|c_j|-stvec'].values.tolist()
         m1s_stvec = df_m1s_qc_vs_stvec['m1-stvec'].values.tolist()
              
-        imag_part = lambda m_ref, c2 : (np.round(m_ref, significant_figures) - (1/4) * np.round(c2**2 , significant_figures)*\
+        real_part = lambda m_ref, c2 : (np.round(m_ref, significant_figures) - (1/4) * np.round(c2**2 , significant_figures)*\
                          (np.cos(gamma/2)**2) - (1/4)*(np.sin(gamma/2))**2 )/\
                            ((-1/2) * np.cos(gamma/2) * np.sin(gamma/2)) 
-                 
-        real_parts_stvec = pd.DataFrame(list(map(imag_part, c2_stvec, m1s_stvec)))
+                           
+                     
+        
+        real_parts_stvec = pd.DataFrame(list(map(real_part, c2_stvec, m1s_stvec)))
         real_parts_stvec.columns=['c_real_stvec']
         
         real_parts_stvec.index = df_m1s_qc_vs_stvec.index
@@ -147,8 +149,11 @@ class TestPhase:
         state_vec_js = state_vec[js, :]
         real_parts_exact = pd.DataFrame(state_vec_js.real.T.tolist()[0], columns = ['c_real_exact'], index=js)
         
+        df = pd.concat((phaseObj.parts_real, real_parts_stvec, real_parts_exact), axis=1)
         
-        return pd.concat((phaseObj.parts_real, real_parts_stvec, real_parts_exact), axis=1)
+        df['error'] = np.abs(df['c_real_sim'] - df['c_real_exact'])
+        
+        return df
         
         
         
@@ -178,13 +183,13 @@ if __name__=='__main__':
     num_layers =3
     num_itr =1
     machine_precision = 10  
-    significant_figures = 3 
+    significant_figures = 2
     eta = 100
     shots = 10**(2*significant_figures)
     shots_amplitude = shots
     shots_phase = shots
     Q = getRandomQ(nspins)
-    gamma= np.pi/10
+    gamma= np.pi/4
     
     
     
@@ -208,18 +213,24 @@ if __name__=='__main__':
     circ_UQU = getUQUCirc(circ_U, circ_Q)
     
     amplObj  = Amplitude(circ_U, circ_UQU, Q, shots_amplitude, eta, significant_figures)
-    phaseObj = Phase(amplObj, nspins, amplObj.circ_U, amplObj.Q, 
+    phaseObj = Phase( amplObj.df_ampl.copy(), nspins, amplObj.circ_U, amplObj.Q, 
                           significant_figures, shots_phase)
     
     
     df_ampl = amplObj.df_ampl
     
+    #### Tests     amplObj
     testPhase.test_ampl(amplObj,  machine_precision)
     print(testPhase.df_ampl_sim_vs_stvec.round(significant_figures))
     print()
+    
+    #### Tests real_m1s from qc vs m1 from stvec
     testPhase.test_real_m1(amplObj, phaseObj, nspins,  machine_precision)
     print(testPhase.df_real_m1s_qc_vs_stvec.round(significant_figures))
     print()
+    
+    
+    
     df = testPhase.test_real_part_static(amplObj, phaseObj, gamma, nspins, significant_figures)
-    df['error'] = np.abs(df['c_real_sim'] - df['c_real_exact'])
+    
     print(df.round(significant_figures))

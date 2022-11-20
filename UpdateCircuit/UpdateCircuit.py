@@ -29,7 +29,7 @@ class UpdateCircuit:
     def __call__(self, list_j, list_y_j, circ,):
         self.circ_new, self.multigate_gate_stat = self.updateCirc(list_j, list_y_j, circ)
 
-        return self.circ_new, self.multigate_gate_stat
+        # return self.circ_new, self.multigate_gate_stat
 
 
     @staticmethod

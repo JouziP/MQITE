@@ -23,25 +23,25 @@ from Phase.PhaseFunctions.computeAmplFromShots import computeAmplFromShots
 class Phase:
     ##### CONSTRUCTOR
     def __init__(self, 
-                  amplObj,
+                  df_ampl,
                   nspins, 
-                  circ, 
+                  circ_U, 
                   Q,
-                  significant_figure, 
+                  significant_figures, 
                   shots,
                   machine_precision=10,
                   j_ref=None,
                   gamma= np.pi/10):
         
         #### static
-        self.amplObj            = amplObj
+        # self.amplObj            = amplObj
         self.nspins             = nspins
-        self.circ               = circ ## the U_t circuit
+        self.circ_U               = circ_U ## the U_t circuit
         self.Q                  = Q # the Q Pauli string given in form of an array of 0,...,3
-        self.significant_figure = significant_figure # significant_figures
+        self.significant_figures = significant_figures # significant_figures
         self.shots              = shots # 
         self.machine_precision  = machine_precision        
-        self.df_ampl            = amplObj.df_ampl# |c_j| in U^QU|0>=\sum_j c_j|j>
+        self.df_ampl            = df_ampl# |c_j| in U^QU|0>=\sum_j c_j|j>
         self.gamma= gamma
         
         if j_ref==None:
@@ -76,150 +76,165 @@ class Phase:
         
         try:
             ## <0| U^ Q U |0>
-            Q_expect = self.df_ampl.loc[0][0].real
+            Q_expect = self.df_ampl.loc[0]['|c_j|'].real
         except:
             Q_expect = 0 
         
         ### norm    
         norm = 1- 2*delta * Q_expect + delta ** 2
         
-        ### y_j
-        df_y_j =  ((self.df_ampl)[0] * -(delta/norm) )                        
-        df_y_j =  pd.DataFrame(df_y_j, columns=[0])
         
-        ### j_list and y_list
-        j_list = df_y_j.loc[df_y_j[0]!=0].index
-        df_y_j = df_y_j.loc[j_list]            
-        # remove 0 double check
+        ### to avoid devision by zero error
+        _epsilon = 10**(-1 * 2 * self.significant_figures)
+        
+        ### the actual parameters        y_j
+        c_j_times_delta_real = self.c_real * -(   delta  /   (norm + _epsilon)  ) 
+        c_j_times_delta_imag = self.c_imag * -(   delta  /   (norm + _epsilon)  )         
+        params_real_plus_imag = -c_j_times_delta_real.values + 1j*c_j_times_delta_imag.values
+        ## -y_j^(re) + 1j * y_j^(im)
+        self.yj_parameters =  pd.DataFrame(params_real_plus_imag, columns=['y_j'], index = self.c_real.index) ## -y_j^(r)
+        
+        ### delta * cj the otput that will be passed to update circuit
+        delta_times_cj  = c_j_times_delta_real.values + 1j*c_j_times_delta_imag.values
+        ## delta * ( c_j ) 
+        self.delta_times_cj =  pd.DataFrame(delta_times_cj, columns=['delta_times_cj'], index = self.c_real.index)
+        
+        # remove 0 --> double check
         try:
-            df_y_j = df_y_j.drop(index=0)
+            self.delta_times_cj = self.delta_times_cj.drop(index=0)
         except:
-            pass            
-        self.ys_j = df_y_j[0].tolist() 
-        self.js = df_y_j.index.tolist()
+            pass  
         
-        return [self.js, self.ys_j]
+        ### j_list and delta_times_cj_values
+        j_list = self.delta_times_cj.loc[self.delta_times_cj['delta_times_cj']!=0].index
+        delta_times_cj_values = self.delta_times_cj.loc[j_list]      
+        
+                 
+        #### returns list of js and list of delta*cj's
+        return [
+                    j_list.tolist(),
+                    delta_times_cj_values.values.T.tolist()[0]
+                ]
         
     
     
     ##### Q. COMPUTE  IMAG PART OF C_J
     def getImagPart(self,):
         
-        circ_adj = self.getImagPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
+        circ_adj_for_imag_part = self.getImagPart_base_circ(self.nspins, self.circ_U, self.Q, self.j_ref, self.gamma)
         
         #################### for each j2  The T_{j_ref -> j2} is different 
         indexs = self.df_ampl.index  ### the observed bit strings from shots; j's
-        parts_imag= [] #[[ 0 ]]  # ref has c_j_ref = 0 + 0j
-        part_indexs=[] #[self.j_ref]
-        m1s = []
-        c2s = []
         
-        for j2 in indexs:
-            circ_uhu_adj = self.getImagPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
-                        
-            #####  amplitude of m_ref from shots 
-            m_ref = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
-            ### collect results            
-            m1s.append(m_ref)
-            ###
-            m_ref = np.round(m_ref, self.significant_figure)
-            
-            
-            #### amplitude  from shots            
-            c2 = self.df_ampl['|c_j|'][j2]
-            ### collect results
-            c2s.append(c2)
-            ####
-            c2_2 = c2**2 ### |c_j|^2
-            self.c2_2    = np.round(c2_2, self.significant_figure)
-            
-            #### compute the sin of theta        
-            imag_part = (m_ref - (1/4) * self.c2_2  *\
-                          (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
-                            ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2)) 
+        m1s        = self.getMsImag(indexs, self.j_ref, self.nspins, 
+                                    circ_adj_for_imag_part, 
+                                self.shots, self.significant_figures )
         
-            #### round to allowed prcision
-            imag_part = np.round(imag_part, self.significant_figure)
-            
-            ### collect results
-            parts_imag.append([ imag_part ])
-            part_indexs.append(j2)
+        c2_2s        = self.getC2s(indexs, self.df_ampl, self.significant_figures)
         
-        ### final results
-        parts_imag = pd.DataFrame(parts_imag, index= part_indexs).round(self.significant_figure)
-        parts_imag.columns=[ 'c_imag_sim' ]    
-    
-        ###
-        m1s = pd.DataFrame(m1s, index= part_indexs)
+        c_imag = self.getComponent(c2_2s, m1s, self.gamma)
+        
+        c_imag = pd.DataFrame(c_imag, index= indexs).round(self.significant_figures)   
+       
+        c_imag.columns=[ 'c_imag_sim' ]   
+        
+        # ###
+        m1s = pd.DataFrame(m1s, index= indexs)
         m1s.columns=[ 'm1s-imag-sim' ]  
-        c2s = pd.DataFrame(c2s, index= part_indexs)       
-        c2s.columns=[ 'c2s-imag-sim' ]  
+        
+        c2_2s = pd.DataFrame(c2_2s, index= indexs)       
+        c2_2s.columns=[ 'c2^2' ]  
         
         ### attribute to the obj
-        self.parts_imag = parts_imag
-        self.parts_real_m1s =  m1s
-        self.parts_real_c2s =  c2s
+        self.c_imag =  c_imag
+        self.m1s_from_imag =  m1s
+        self.c2_2power2__imag =  c2_2s
         
-    
     
     ##### Q. COMPUTE  REAL PART OF C_J
     def getRealPart(self,):                
-        circ_adj = self.getRealPart_base_circ(self.nspins, self.circ, self.Q, self.j_ref, self.gamma)
+        circ_adj_for_real_part = self.getRealPart_base_circ(self.nspins, self.circ_U, self.Q, self.j_ref, self.gamma)
         #################### for each j2  The T_{j_ref -> j2} is different 
         indexs = self.df_ampl.index  ### the observed bit strings from shots; j's
-        parts_real= []# [[ 0]]  # ref has c_j_ref = 0 + 0j
-        part_indexs= [] #[self.j_ref]
-        m1s = []
-        c2s = []
         
-        for j2 in indexs:
-            circ_uhu_adj = self.getRealPart_ref_circ(self.j_ref, j2, self.nspins,  circ_adj)
-            ####  from shots
-            m_ref = computeAmplFromShots(circ_uhu_adj, self.shots, self.j_ref)
-            ### collect results            
-            m1s.append(m_ref)
-            ####
-            m_ref = np.round(m_ref, self.significant_figure)
-                                       
-            #### amplitude  from shots
-            c2 = self.df_ampl['|c_j|'][j2]
-            ### collect results
-            c2s.append(c2)
-            #### 
-            c2_2 = c2**2 ### |c_j|^2
-            self.c2_2    = np.round(c2_2, self.significant_figure)
-            
-            
-            
-            
-            #### compute the cos of theta        
-            real_part = (m_ref - (1/4) * self.c2_2 *\
-                          (np.cos(self.gamma/2)**2) - (1/4)*(np.sin(self.gamma/2))**2 )/\
-                            ((-1/2) * np.cos(self.gamma/2) * np.sin(self.gamma/2))
-            
-            #### round to allowed prcision
-            real_part = np.round(real_part, self.significant_figure)
-               
-            ### collect results
-            parts_real.append([ real_part ])
-            part_indexs.append(j2)
-           
-        ### final results
-        parts_real = pd.DataFrame(parts_real, index= part_indexs).round(self.significant_figure)        
-        parts_real.columns=[ 'c_real_sim' ]   
+        m1s          = self.getMsReal(indexs, self.j_ref, self.nspins, 
+                                      circ_adj_for_real_part, 
+                                      self.shots, self.significant_figures )
+        c2_2s        = self.getC2s(indexs, self.df_ampl, self.significant_figures)
+        c_real   = self.getComponent(c2_2s, m1s, self.gamma)
+        c_real   = pd.DataFrame(c_real, index= indexs).round(self.significant_figures)   
+       
+        c_real.columns=[ 'c_real_sim' ]   
         
-        ###
-        m1s = pd.DataFrame(m1s, index= part_indexs)
+        # ###
+        m1s = pd.DataFrame(m1s, index= indexs)
         m1s.columns=[ 'm1s-real-sim' ]  
-        c2s = pd.DataFrame(c2s, index= part_indexs)       
-        c2s.columns=[ 'c2s-real--sim' ]  
+        
+        c2_2s = pd.DataFrame(c2_2s, index= indexs)       
+        c2_2s.columns=[ 'c2^2' ]  
         
         ### attribute to the obj
-        self.parts_real =  parts_real
-        self.parts_real_m1s =  m1s
-        self.parts_real_c2s =  c2s
+        self.c_real =  c_real
+        self.m1s_from_real =  m1s
+        self.c2_2power2__real =  c2_2s
         
-    ######## TOOLKIT
+        
+        
+        
+    ########################################### TOOLKIT
+    
+    @staticmethod
+    def getComponent(c2_2s, m1s, gamma):
+        component = lambda m_ref, c2_2 : (m_ref - (1/4) * c2_2 *\
+                      (np.cos(gamma/2)**2) - (1/4)*(np.sin(gamma/2))**2 )/\
+                        ((-1/2) * np.cos(gamma/2) * np.sin(gamma/2))
+        return list(map(component, m1s, c2_2s))
+        
+        
+    @staticmethod
+    def getC2s(indexs, df_ampl, significant_figures):
+        c2_2s = []
+        for j2 in indexs:
+            #### amplitude  from shots
+            c2 = df_ampl['|c_j|'][j2]            
+            #### 
+            c2_2 = c2**2 ### |c_j|^2
+            c2_2    = np.round(c2_2, significant_figures)
+            ### collect results
+            c2_2s.append(c2_2)
+        return c2_2s
+    
+    @staticmethod
+    def getMsReal(indexs, j_ref, nspins, circ_adj, shots, significant_figures):
+        m1s = []
+        for j2 in indexs:
+            circ_uhu_adj = Phase.getRealPart_ref_circ(j_ref, j2, nspins,  circ_adj)
+            ####  from shots
+            m_ref = computeAmplFromShots(circ_uhu_adj, shots, j_ref)            
+            ####
+            m_ref = np.round(m_ref, significant_figures)
+            
+            ### collect results            
+            m1s.append(m_ref)
+            
+        return m1s
+    
+    @staticmethod
+    def getMsImag(indexs, j_ref, nspins, circ_adj, shots, significant_figures):
+        m1s = []
+        for j2 in indexs:
+            circ_uhu_adj = Phase.getImagPart_ref_circ(j_ref, j2, nspins,  circ_adj)
+            ####  from shots
+            m_ref = computeAmplFromShots(circ_uhu_adj, shots, j_ref)            
+            ####
+            m_ref = np.round(m_ref, significant_figures)
+            
+            ### collect results            
+            m1s.append(m_ref)
+            
+        return m1s
+    
+    
     @staticmethod
     def computeAmplFromShots(circ_uhu_adj, shots, j_ref):
         return computeAmplFromShots(circ_uhu_adj, shots, j_ref)
@@ -258,6 +273,10 @@ class Phase:
                 circ_adj.cx(nspins, q)                           
         circ_adj.x(nspins)  
         
+        ### H on ancillary
+        circ_adj.h(nspins)
+        
+        return circ_adj
         
         
     @staticmethod
@@ -275,7 +294,7 @@ class Phase:
     
     
     @staticmethod  
-    def getRealPart_ref_circ(j_ref, j2,nspins,  circ_adj):
+    def getRealPart_ref_circ(j_ref, j2,  nspins,  circ_adj):
         
         #### T Gate        
         p_12_int = j2^j_ref                
