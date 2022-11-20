@@ -6,7 +6,7 @@ The program has the following main packages:
 
 * Phase: contains the class Phase which uses and Amplitude object to construct additional circuit (Appendix B) and computes the real and imaginary parts of every observed c_j from Amplitude. It also translates c_j into parameter (y_j).
 
-* UpdateCircuit: uses the ccomputed c_j (real, imaginary) to update circuit. This is done by creating a layer of gates and adding them to the start of the current circuit instruction.
+* UpdateCircuit: uses the computed c_j (real, imaginary) to update circuit. This is done by creating a layer of gates and adding them to the start of the current circuit instruction.
 
 * BasicFunctions: contains some trivial and toolkit functions that are used in the body of other main classes
 
