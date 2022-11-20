@@ -14,10 +14,6 @@ Created on Wed Jun  1 10:23:43 2022
 @author: pej
 """
 
-from SimulateMQITE.log_config import logger
-
-
-
 
 from scipy.linalg import schur
 from time import time    , perf_counter, ctime

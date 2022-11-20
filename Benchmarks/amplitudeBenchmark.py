@@ -103,7 +103,7 @@ class AmplitudeBenchmark:
         ax.plot(xs, error_t[2].values)
         
         ax.set_xlabel('(t,k) step ')
-        ax.set_ylabel('expectaion ')
+        ax.set_ylabel('error  ')
         ax.legend()
         
         plt.show()
