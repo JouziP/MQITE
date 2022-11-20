@@ -16,10 +16,10 @@ The program has the following main packages:
 
 * Problems: example problems that can be used to test the algorithm.
 
-* Observables: A class that uses the current state of the circuit to calculate the expectaion of an observable. Current implementation uses state-vector.
+* Observables: A class that uses the current state of the circuit to calculate the expectaion of an observable. Current implementation uses state vector.
 
-The main entry is SimulatMQITE. This folder contains one example implementation of MQITE Algorithm (fig.1 in https://arxiv.org/abs/2208.10535v1)
-For start, you may want to run the SimulatMQITE/Tests/ising_model.py which is a test application.
+The main entry is SimulateMQITE. This folder contains one possible implementation of MQITE Algorithm (fig.1 in https://arxiv.org/abs/2208.10535v1)
+For start, you may want to run the SimulateMQITE/Tests/ising_model.py which is a test application.
 
 
 
